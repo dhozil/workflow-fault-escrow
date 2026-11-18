@@ -168,6 +168,6 @@ not evidence. The only output consumed is a category from a fixed set.
 | `genvm-lint check` | pass — 9 methods (3 view, 6 write) |
 | Direct-mode tests | **12/12 passed** |
 | Deterministic on-chain (`leader_only=True`) | **23/23 PASS** |
-| Full AI consensus attribution | see README — both `stage_at_fault` and `stage_not_at_fault` cases resolved on studionet |
+| Full AI consensus attribution | both directions resolved with 3/3 `agree` and empty `stderr`: `stage_at_fault` → 600 refunded / 400 paid (`0xf261b7e2…43f4`); `stage_not_at_fault` → 1000 released (`0x4ab6d4da…ac06`) |
 | Source ↔ deployment | on-chain code compared byte-for-byte with the repository source |
 | Deployment | `0xb7Ce6bBc39DFC754a2BD35ADBFC4CA9a95e3e3F1`, deploy tx `0x8ec0f4fa…78ff` |

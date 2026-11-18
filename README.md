@@ -48,6 +48,7 @@ Reference: [GenLayer Use Cases — Agent-to-agent commitments](https://docs.genl
 | **Network** | GenLayer studionet (chain `61999`) |
 | **Deploy tx** | `0x8ec0f4fa9853287eaedb91ba0eb1f02eb72c3ab2cd3e09a622d57f31e57b78ff` |
 | **Constructor args** | none |
+| **On-chain code** | byte-identical to `contracts/workflow_fault_escrow.py` (SHA-256 `2c80ae5f…08fe`) |
 
 ## Highlights
 
@@ -259,3 +260,39 @@ Deterministic studionet run (`leader_only=True`), script
 | Double claim / settle while claim resolvable | reverted (expected) |
 | `settle_workflow` after the time gates | accepted, `status=closed`, refunded `1000`, remaining `0` |
 | Double settle | reverted (expected) |
+
+### Full AI consensus (real validators, not leader-only)
+
+Evidence is pinned to commit
+[`e5ae50d`](https://github.com/dhozil/workflow-fault-escrow/tree/e5ae50d9c3f32bd4973ef581e416e13a8343a93b/evidence);
+the contract fetched each file itself and verified the committed SHA-256 before judging.
+
+**Case A — a real failure is confirmed (`stage_at_fault`).** Stage 0 committed a prose
+meeting note; the client's report said it lacked the required JSON block and endpoint table.
+Validators: 3 `agree`, `stderr` empty.
+
+| | |
+|---|---|
+| Workflow | `consensus-atfault-1794999399` (2 stages, 600 + 400) |
+| `file_failure` tx | `0x9d0dd8e0065300a587991ae67f661c6e793de4083760d7d064232b56e737ff62` |
+| `resolve_failure` tx | `0xf261b7e2fffe7b14e3327bd09a61c33f8767695b413d58325face0375c8343f4` |
+| Verdict | `stage_at_fault` — *"Artifact shows only a meeting summary with no JSON block (service/port keys) and no markdown endpoint table; spec explicitly requires both."* |
+| Settlement | stage 0 `refunded` (600), stage 1 `paid` (400), `released=400`, `refunded=600`, `remaining=0`, workflow `closed` |
+| `verdict_binding` | `0db98dfbbd2a6edaa159c5519573f9dbddaeb02896d10fe52909f5ccb7de607a` |
+
+**Case B — an unfounded claim is rejected (`stage_not_at_fault`).** Stage 0 committed the
+compliant artifact; the client's report claimed the required payload was missing.
+Validators: 3 `agree`, `stderr` empty.
+
+| | |
+|---|---|
+| Workflow | `consensus-nofault-1794999470` (2 stages, 600 + 400) |
+| `file_failure` tx | `0xf6b3ba001c1731c5eef10ecb52f48462e16cb6798dafb57f639b2c4cc80b48ad` |
+| `resolve_failure` tx | `0x4ab6d4da55cd4151177572ac2b29e344b16ee33929b8720909a242799c15ac06` |
+| Verdict | `stage_not_at_fault` — *"…The artifact clearly contains both the required JSON block (`{"service": "checkout-api", "port": 8080}`) and a markdown table with three HTTP endpoints. The client failure report contradicts the actual artifact contents and is therefore unfounded."* |
+| Settlement | stage 0 `paid` (600), stage 1 `paid` (400), `released=1000`, `refunded=0`, `remaining=0`, workflow `closed` |
+| `verdict_binding` | `4518354d38e4d5f0974a166e82d37d93fbefdfb767316b966878b132c9fd467b` |
+
+The two cases differ only in *which* artifact was committed to stage 0 and which report was
+filed, and the escrow moved in exactly opposite directions — the whole disputed amount is
+decided by the one categorical field validators must agree on.

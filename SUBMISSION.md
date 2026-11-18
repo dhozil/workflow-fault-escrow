@@ -82,9 +82,15 @@ terminal states). Its own audit found and fixed:
 ## Verification
 - 12/12 direct-mode tests (`gltest tests/ -q`)
 - Deterministic on-chain verification on studionet (`scripts/verify_onchain.py`): **23/23 PASS**
-- Full AI-consensus attribution on studionet: both a `stage_at_fault` case (blamed stage
-  refunded, other stage paid) and a `stage_not_at_fault` case (all submitted stages paid);
-  transaction hashes and live state are listed in `README.md`
+- Full AI-consensus attribution on studionet, evidence pinned to a git commit and fetched by
+  the contract itself:
+  - `stage_at_fault`: workflow `consensus-atfault-1794999399`, resolve tx
+    `0xf261b7e2fffe7b14e3327bd09a61c33f8767695b413d58325face0375c8343f4`,
+    3 validators `agree`, blamed stage refunded 600, other stage paid 400
+  - `stage_not_at_fault`: workflow `consensus-nofault-1794999470`, resolve tx
+    `0x4ab6d4da55cd4151177572ac2b29e344b16ee33929b8720909a242799c15ac06`,
+    3 validators `agree`, all 1000 released to the workers
+  - both runs: empty `stderr`, `released + refunded == total`, workflow closed
 - On-chain code byte-identical to `contracts/workflow_fault_escrow.py`
 
 ## Live Deployment
